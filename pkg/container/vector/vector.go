@@ -48,12 +48,12 @@ type Vector struct {
 
 	// area for holding large strings.
 	area []byte
-	flag []bool
 
 	capacity int
 	length   int
 
 	nsp *nulls.Nulls // nulls list
+	rsp *nulls.Nulls
 
 	cantFreeData bool
 	cantFreeArea bool
@@ -178,6 +178,10 @@ func (v *Vector) SetTypeScale(scale int32) {
 
 func (v *Vector) GetNulls() *nulls.Nulls {
 	return v.nsp
+}
+
+func (v *Vector) GetRollups() *nulls.Nulls {
+	return v.rsp
 }
 
 func (v *Vector) SetNulls(nsp *nulls.Nulls) {
@@ -311,6 +315,16 @@ func NewConstNull(typ types.Type, length int, mp *mpool.MPool) *Vector {
 	return vec
 }
 
+func NewRollupConst(typ types.Type, length int, mp *mpool.MPool) *Vector {
+	vec := NewVecFromReuse()
+	vec.rsp.AddRange(0, uint64(length))
+	vec.typ = typ
+	vec.class = CONSTANT
+	vec.length = length
+
+	return vec
+}
+
 func NewConstFixed[T any](typ types.Type, val T, length int, mp *mpool.MPool) (vec *Vector, err error) {
 	vec = NewVecFromReuse()
 	vec.typ = typ
@@ -412,6 +426,10 @@ func SetStringAt(v *Vector, idx int, bs string, mp *mpool.MPool) error {
 //	a + Null, and the vector of right part will return true
 func (v *Vector) IsConstNull() bool {
 	return v.IsConst() && len(v.data) == 0
+}
+
+func (v *Vector) IsRollup() bool {
+	return v.length > 0 && v.length == v.rsp.Count()
 }
 
 func (v *Vector) GetArea() []byte {
@@ -2451,6 +2469,10 @@ func (v *Vector) UnionBatch(w *Vector, offset int64, cnt int, flags []uint8, mp 
 	if w.IsConst() {
 		oldLen := v.length
 		v.length += addCnt
+		if w.IsRollup() {
+			nulls.AddRange(v.rsp, uint64(oldLen), uint64(v.length))
+			return nil
+		}
 		if w.IsConstNull() {
 			nulls.AddRange(v.nsp, uint64(oldLen), uint64(v.length))
 		} else if v.GetType().IsVarlen() {

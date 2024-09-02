@@ -196,7 +196,6 @@ func (ctr *container) processGroupByAndAgg(
 				if ap.NeedRollup {
 					for i := len(ctr.groupVecs.Vec) - 1; i >= 0; i-- {
 						ctr.rollupColumn = i
-						last := ctr.rollupBat.RowCount()
 						switch ctr.typ {
 						case H8:
 							err = ctr.processH8(bat, proc, true)
@@ -204,17 +203,6 @@ func (ctr *container) processGroupByAndAgg(
 							err = ctr.processHStr(bat, proc, true)
 						default:
 							err = moerr.NewInternalError(proc.Ctx, "unexpected hashmap typ for group-operator.")
-						}
-						now := ctr.rollupBat.RowCount()
-						for j := 0; j < i; j++ {
-							for k := 0; k < now-last; k++ {
-								ctr.rollupBat.Vecs[j].AddFlag([]bool{false})
-							}
-						}
-						for j := i; j < len(ctr.groupVecs.Vec); j++ {
-							for k := 0; k < now-last; k++ {
-								ctr.rollupBat.Vecs[j].AddFlag([]bool{true})
-							}
 						}
 					}
 				}
@@ -334,7 +322,7 @@ func (ctr *container) processH8(bat *batch.Batch, proc *process.Process, rollup 
 			rows = ctr.rollupIntMap.GroupCount()
 			rollVec := vecs[:ctr.rollupColumn]
 			for k, vec := range vecs[ctr.rollupColumn:] {
-				nullVec := vector.NewConstNull(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
+				nullVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
 				rollVec = append(rollVec, nullVec)
 			}
 			vals, _, err = itr.Insert(i, n, rollVec)
@@ -378,7 +366,7 @@ func (ctr *container) processHStr(bat *batch.Batch, proc *process.Process, rollu
 			rows = ctr.rollupStrMap.GroupCount()
 			rollVec := vecs[:ctr.rollupColumn]
 			for k, vec := range vecs[ctr.rollupColumn:] {
-				nullVec := vector.NewConstNull(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
+				nullVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
 				rollVec = append(rollVec, nullVec)
 			}
 			vals, _, err = itr.Insert(i, n, rollVec)
@@ -605,11 +593,6 @@ func (ctr *container) aggWithoutGroupByCannotEmptySet(bat **batch.Batch, proc *p
 
 func (ctr *container) concatRollup(rollupBat *batch.Batch, proc *process.Process) error {
 	count := rollupBat.RowCount()
-	for _, vec := range ctr.bat.Vecs {
-		for i := 0; i < vec.Length(); i++ {
-			vec.AddFlag([]bool{false})
-		}
-	}
 	for offset := 0; offset < count; offset += hashmap.UnitLimit { // batch
 		n := count - offset
 		if n > hashmap.UnitLimit {
