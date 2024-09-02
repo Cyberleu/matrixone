@@ -2471,7 +2471,6 @@ func (v *Vector) UnionBatch(w *Vector, offset int64, cnt int, flags []uint8, mp 
 		v.length += addCnt
 		if w.IsRollup() {
 			nulls.AddRange(v.rsp, uint64(oldLen), uint64(v.length))
-			return nil
 		}
 		if w.IsConstNull() {
 			nulls.AddRange(v.nsp, uint64(oldLen), uint64(v.length))

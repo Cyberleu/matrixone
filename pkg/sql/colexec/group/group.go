@@ -322,7 +322,7 @@ func (ctr *container) processH8(bat *batch.Batch, proc *process.Process, rollup 
 			rows = ctr.rollupIntMap.GroupCount()
 			rollVec := vecs[:ctr.rollupColumn]
 			for k, vec := range vecs[ctr.rollupColumn:] {
-				nullVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
+				nullVec := vector.NewConstNull(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
 				rollVec = append(rollVec, nullVec)
 			}
 			vals, _, err = itr.Insert(i, n, rollVec)
@@ -366,7 +366,7 @@ func (ctr *container) processHStr(bat *batch.Batch, proc *process.Process, rollu
 			rows = ctr.rollupStrMap.GroupCount()
 			rollVec := vecs[:ctr.rollupColumn]
 			for k, vec := range vecs[ctr.rollupColumn:] {
-				nullVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
+				nullVec := vector.NewConstNull(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
 				rollVec = append(rollVec, nullVec)
 			}
 			vals, _, err = itr.Insert(i, n, rollVec)
