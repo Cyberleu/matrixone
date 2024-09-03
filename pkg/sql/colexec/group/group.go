@@ -320,12 +320,12 @@ func (ctr *container) processH8(bat *batch.Batch, proc *process.Process, rollup 
 			vals, _, err = itr.Insert(i, n, vecs)
 		} else {
 			rows = ctr.rollupIntMap.GroupCount()
-			rollVec := vecs[:ctr.rollupColumn]
+			rollVecs := vecs[:ctr.rollupColumn]
 			for k, vec := range vecs[ctr.rollupColumn:] {
-				nullVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
-				rollVec = append(rollVec, nullVec)
+				rollVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
+				rollVecs = append(rollVecs, rollVec)
 			}
-			vals, _, err = itr.Insert(i, n, rollVec)
+			vals, _, err = itr.Insert(i, n, rollVecs)
 		}
 		if err != nil {
 			return err
@@ -364,12 +364,12 @@ func (ctr *container) processHStr(bat *batch.Batch, proc *process.Process, rollu
 			vals, _, err = itr.Insert(i, n, vecs)
 		} else {
 			rows = ctr.rollupStrMap.GroupCount()
-			rollVec := vecs[:ctr.rollupColumn]
+			rollVecs := vecs[:ctr.rollupColumn]
 			for k, vec := range vecs[ctr.rollupColumn:] {
-				nullVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
-				rollVec = append(rollVec, nullVec)
+				rollVec := vector.NewRollupConst(ctr.groupVecs.Typ[ctr.rollupColumn+k], vec.Length(), proc.Mp())
+				rollVecs = append(rollVecs, rollVec)
 			}
-			vals, _, err = itr.Insert(i, n, rollVec)
+			vals, _, err = itr.Insert(i, n, rollVecs)
 		}
 		if err != nil {
 			return err

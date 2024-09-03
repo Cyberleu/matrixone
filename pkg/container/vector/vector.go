@@ -2236,6 +2236,9 @@ func (v *Vector) UnionOne(w *Vector, sel int64, mp *mpool.MPool) error {
 	oldLen := v.length
 	v.length++
 	if w.IsConst() {
+		if w.IsRollup() {
+			nulls.Add(v.rsp, uint64(oldLen))
+		}
 		if w.IsConstNull() {
 			nulls.Add(v.nsp, uint64(oldLen))
 			return nil
@@ -2507,6 +2510,9 @@ func (v *Vector) UnionBatch(w *Vector, offset int64, cnt int, flags []uint8, mp 
 		if !w.nsp.EmptyByFlag() {
 			if flags == nil {
 				for i := 0; i < cnt; i++ {
+					if w.rsp.Contains(uint64(offset) + uint64(i)) {
+						nulls.Add(v.rsp, uint64(v.length))
+					}
 					if w.nsp.Contains(uint64(offset) + uint64(i)) {
 						nulls.Add(v.nsp, uint64(v.length))
 					} else {
@@ -2521,6 +2527,9 @@ func (v *Vector) UnionBatch(w *Vector, offset int64, cnt int, flags []uint8, mp 
 				for i := range flags {
 					if flags[i] == 0 {
 						continue
+					}
+					if w.rsp.Contains(uint64(offset) + uint64(i)) {
+						nulls.Add(v.rsp, uint64(v.length))
 					}
 					if w.nsp.Contains(uint64(offset) + uint64(i)) {
 						nulls.Add(v.nsp, uint64(v.length))
