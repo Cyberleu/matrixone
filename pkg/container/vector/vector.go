@@ -735,6 +735,7 @@ func (v *Vector) Dup(mp *mpool.MPool) (*Vector, error) {
 	w.length = v.length
 	w.sorted = v.sorted
 	w.GetNulls().InitWith(v.GetNulls())
+	w.GetRollups().InitWith(v.GetRollups())
 
 	dataLen := v.typ.TypeSize()
 	if v.IsConst() {
@@ -3153,6 +3154,7 @@ func shuffleFixed[T types.FixedSizeT](v *Vector, sels []int64, mp *mpool.MPool) 
 	ws = ws[:ns]
 	shuffle.FixedLengthShuffle(vs, ws, sels)
 	nulls.Filter(v.nsp, sels, false)
+	nulls.Filter(v.rsp, sels, false)
 	// XXX We should never allow "half-owned" vectors later. And unowned vector should be strictly read-only.
 	if v.cantFreeData {
 		v.cantFreeData = false
