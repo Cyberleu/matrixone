@@ -108,6 +108,7 @@ func (v *Vector) Reset(typ types.Type) {
 
 	v.length = 0
 	v.nsp.Reset()
+	v.rsp.Reset()
 	v.sorted = false
 }
 
@@ -124,6 +125,7 @@ func (v *Vector) ResetWithNewType(t *types.Type) {
 		v.area = v.area[:0]
 	}
 	v.nsp = &nulls.Nulls{}
+	v.rsp = &nulls.Nulls{}
 	v.length = 0
 	v.capacity = cap(v.data) / v.typ.TypeSize()
 	v.sorted = false
@@ -466,6 +468,7 @@ func (v *Vector) Free(mp *mpool.MPool) {
 	v.cantFreeArea = false
 
 	v.nsp.Reset()
+	v.rsp.Reset()
 	v.sorted = false
 	v.isBin = false
 
