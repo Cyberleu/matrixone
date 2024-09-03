@@ -35,13 +35,12 @@ country,
 product
 WITH
 ROLLUP
-ORDER BY
-profit;
+ORDER BY profit;
 
 SELECT
 IF(
 GROUPING(year),
-'All years',
+9999,
 year
 ) AS year,
 IF(
